@@ -9,22 +9,28 @@ import java.io.BufferedReader;
 import java.io.BufferedWriter;
 import java.io.File;
 import java.io.FileInputStream;
+import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStreamReader;
 import java.io.OutputStreamWriter;
+import java.io.PrintWriter;
+import java.io.UnsupportedEncodingException;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Scanner;
 
 import javax.swing.DefaultListModel;
 import javax.swing.JButton;
 import javax.swing.JFileChooser;
 import javax.swing.JFrame;
+import javax.swing.JLabel;
 import javax.swing.JList;
 import javax.swing.JPanel;
+import javax.swing.JProgressBar;
 import javax.swing.JScrollBar;
 import javax.swing.JScrollPane;
 import javax.swing.JTabbedPane;
@@ -56,22 +62,42 @@ public class ShowFrame {
     static JScrollPane scrollPanel=new JScrollPane(textArea);
     
     static JTextField urlText = new JTextField(100);
+    static JTextField hostText = new JTextField(100);
+    static JTextField portText = new JTextField(100);
+    static JTextField useridText = new JTextField(100);
     
     static JButton addButton = new JButton("添加");
+    static JButton stopButton = new JButton("停止添加");
     static JButton deleteButton = new JButton("删除");
     static JButton importButton = new JButton("导入");
     static JButton exportButton = new JButton("导出");
     static JButton downloadButton = new JButton("提取");
     static JButton pauseButton = new JButton("暂停");
     
-    
+
+	public static JProgressBar progressBar = new JProgressBar();
+	
     static boolean isPause = false;
     
     
     public EhentaiView ehv = new EhentaiView();
     public AddSearchList asl = new AddSearchList();
+	public static List<String> urlList = new ArrayList<String>();
+    
+	public static Map<String,String> cookie = new HashMap<String,String>();
     
 	public ShowFrame() {
+		try {
+			readConfig();
+		} catch (FileNotFoundException e2) {
+			// TODO Auto-generated catch block
+			e2.printStackTrace();
+		}
+		
+		cookie.put("sk", "mcenn8w6eeod8of5x697k24xhu5o");//默认提取中文标题，应该是这个，不知道是否长时间有效
+		if(useridText.getText() != null && !useridText.getText().equals("")) {
+			cookie.put("ipb_member_id", useridText.getText());//个人设置，筛选掉不要的分类
+		}
 		// 创建 JFrame 实例
 	    // 得到显示器屏幕的宽高
 	    int width = Toolkit.getDefaultToolkit().getScreenSize().width;
@@ -93,11 +119,13 @@ public class ShowFrame {
         inputPanel.add(urlText,BorderLayout.CENTER);
 
         controlPanel.add(addButton);
+        stopButton.setEnabled(false);
+        controlPanel.add(stopButton);
         controlPanel.add(deleteButton);
-        controlPanel.add(importButton);
-        controlPanel.add(exportButton);
         
         inputPanel.add(controlPanel,BorderLayout.EAST);
+        inputPanel.add(progressBar,BorderLayout.SOUTH);
+		progressBar.setStringPainted(true);//设置进度条显示提示信息
         
         panel.add(inputPanel,BorderLayout.NORTH);
         
@@ -107,6 +135,8 @@ public class ShowFrame {
         
         panel.add(showPanel,BorderLayout.CENTER);
 
+        downloadPanel.add(importButton);
+        downloadPanel.add(exportButton);
         downloadPanel.add(downloadButton);
         downloadPanel.add(pauseButton);
         panel.add(downloadPanel,BorderLayout.SOUTH);
@@ -115,7 +145,27 @@ public class ShowFrame {
         
         
         tabPanel.add("设置",configPanel);
-        
+        JPanel configPanel2 = new JPanel();
+        configPanel2.setLayout(new GridLayout(3,2));
+        configPanel2.setSize(100,50);
+        JLabel hostLabel = new JLabel("服务器地址：");
+        hostLabel.setHorizontalAlignment(JLabel.RIGHT);
+        configPanel2.add(hostLabel);
+        configPanel2.add(hostText);
+        hostText.setSize(frame.getSize().width/2-1000, hostText.getSize().height);
+        JLabel portLabel = new JLabel("端口：");
+        portLabel.setHorizontalAlignment(JLabel.RIGHT);
+        configPanel2.add(portLabel);
+        configPanel2.add(portText);
+        portText.setSize(frame.getSize().width/2-1000, portText.getSize().height);
+        JLabel useridLabel = new JLabel("用户ID：");
+        useridLabel.setHorizontalAlignment(JLabel.RIGHT);
+        configPanel2.add(useridLabel);
+        configPanel2.add(useridText);
+        useridText.setSize(frame.getSize().width/2-1000, useridText.getSize().height);
+        JButton saveConfigButton = new JButton("应用");
+        configPanel.add(configPanel2,BorderLayout.CENTER);
+        configPanel.add(saveConfigButton,BorderLayout.NORTH);
         
 	    frame.add(tabPanel);
         
@@ -126,11 +176,19 @@ public class ShowFrame {
 	    //按钮添加监听器
         addButton.addActionListener(new ActionListener() {
         	    public void actionPerformed(ActionEvent e) {
+        	    	addButton.setEnabled(false);
+        	    	stopButton.setEnabled(true);
+        	    	addButton.setText("添加中");
         			String url = urlText.getText();
+        			try {
+						url = java.net.URLDecoder.decode(url, "UTF-8");
+						urlText.setText(url);
+					} catch (UnsupportedEncodingException e2) {
+						// TODO Auto-generated catch block
+						e2.printStackTrace();
+					}
         			Document doc = null;
 					try {
-						Map<String,String> cookie = new HashMap<String,String>();
-						cookie.put("sk", "mcenn8w6eeod8of5x697k24xhu5o");//默认提取中文标题，应该是这个，不知道是否长时间有效
 						
 						doc = Jsoup.connect(url).cookies(cookie).get();
 					} catch (IOException e1) {
@@ -139,8 +197,21 @@ public class ShowFrame {
 						ShowFrame.textAreaAddText(e1.toString()+"\n");
 						return;
 					}
-					if(url.contains("f_search")) {
-						ShowFrame.textAreaAddText("检测到搜索列表\n");
+					if(url.contains("f_search") || url.contains("tag")) {
+						asl = new AddSearchList();
+						ShowFrame.textAreaAddText("检测到搜索列表:");
+						urlText.setEnabled(false);
+						if(url.contains("f_search")) {
+							ShowFrame.textAreaAddText(url.substring(url.indexOf("f_search=")+9));
+							if(url.contains("page=")) {
+								asl.startPage = Integer.parseInt(url.substring(url.indexOf("page=")+5,url.indexOf("page=")+url.substring(url.indexOf("page=")).indexOf("&")))+1;
+							}
+						}
+						else if(url.contains("tag/")) {
+							ShowFrame.textAreaAddText(url.substring(url.indexOf("tag/")+4,url.indexOf("tag/")+4+url.substring(url.indexOf("tag/")+4).indexOf("/")));
+							asl.startPage = Integer.parseInt(url.substring(url.lastIndexOf("/")+1))+1;
+						}
+						ShowFrame.textAreaAddText("\n");
 						asl.doc = doc;
 						asl.ehv = ehv;
 						asl.execute();
@@ -151,7 +222,7 @@ public class ShowFrame {
         			if(doc.html().contains("Never Warn Me Again")) {
         				url = url + "?nw=always";
 						try {
-							doc = Jsoup.connect(url).get();
+							doc = Jsoup.connect(url).cookies(cookie).get();
 						} catch (IOException e1) {
 							// TODO Auto-generated catch block
 							e1.printStackTrace();
@@ -170,17 +241,29 @@ public class ShowFrame {
         			title = title.replace('<', '_');
         			title = title.replace('>', '_');
         			title = title.replace('|', '_');
-        			listModel.addElement(title+url);
-        			urlText.setText("");
-        			ehv.urlList.add(url);
-        			JScrollBar sBar = scrollPanel2.getVerticalScrollBar();
-        			sBar.setValue(sBar.getMaximum());
+    				if(!urlList.contains(url)) {
+            			listModel.addElement(title+url);
+    					urlList.add(url);
+            			JScrollBar sBar = scrollPanel2.getVerticalScrollBar();
+            			sBar.setValue(sBar.getMaximum()+10);
+    				}
+    				else {
+    					ShowFrame.textAreaAddText("该漫画已存在于列表中\n");
+    					list.setSelectedIndex(urlList.indexOf(url));
+            			JScrollBar sBar = scrollPanel2.getVerticalScrollBar();
+    					sBar.setValue(sBar.getMaximum() * urlList.indexOf(url) / urlList.size());
+    				}
+        			ShowFrame.addButton.setText("添加");
+        	    	ShowFrame.addButton.setEnabled(true);
+
+        			ShowFrame.urlText.setText("");
+        			ShowFrame.urlText.setEnabled(true);
         	    }
         });
         
         deleteButton.addActionListener(new ActionListener() {
         	    public void actionPerformed(ActionEvent e) {
-        	    	ehv.urlList.remove(list.getSelectedIndex());
+        	    	urlList.remove(list.getSelectedIndex());
         	    	listModel.remove(list.getSelectedIndex());
         	    }
         });
@@ -209,7 +292,7 @@ public class ShowFrame {
 		        		Collections.sort(tempList);
 		        		for(int i = 0;i < tempList.size();i++) {
 		                	listModel.addElement(tempList.get(i));
-		        			ehv.urlList.add(tempList.get(i).substring(tempList.get(i).indexOf("http")));
+		        			urlList.add(tempList.get(i).substring(tempList.get(i).indexOf("http")));
 		        		}
 		                br.close();
 		                isr.close();
@@ -217,7 +300,7 @@ public class ShowFrame {
 		                ShowFrame.textAreaAddText("导入成功！\n");
 		            }
 		            else
-		            	ShowFrame.textAreaAddText("No file is selected!\n");
+		            	ShowFrame.textAreaAddText("未选择文件\n");
 				}
 				catch(Exception ex) {
 					ex.printStackTrace();
@@ -251,7 +334,7 @@ public class ShowFrame {
 		            	ShowFrame.textAreaAddText("导出成功！\n");
 		            }
 		            else
-		            	ShowFrame.textAreaAddText("No file is selected!\n");
+		            	ShowFrame.textAreaAddText("未选择文件\n");
 				}
 				catch(Exception ex) {
 					ex.printStackTrace();
@@ -265,6 +348,9 @@ public class ShowFrame {
 			public void actionPerformed(ActionEvent e) {
 				// TODO Auto-generated method stub
 				try {
+					progressBar.setValue(0);
+					
+					ehv = new EhentaiView();
 					ehv.execute();
 					downloadButton.setText("提取中");
 					downloadButton.setEnabled(false);
@@ -279,15 +365,58 @@ public class ShowFrame {
         pauseButton.addActionListener(new ActionListener() {
     	    public synchronized void actionPerformed(ActionEvent e) {
     	    	isPause = !isPause;
-    	    	synchronized(ehv) {
-        	    	if(isPause) {
-        	    		pauseButton.setText("暂停中");
-        	    	}
-        	    	else {
-        	    		ehv.notify();
-        	    		pauseButton.setText("暂停");
-        	    	}
+    	    	if(isPause) {
+    	    		pauseButton.setText("继续添加/提取");
     	    	}
+    	    	else {
+    	    		pauseButton.setText("暂停");
+	    	    	synchronized(ehv) {
+        	    		ehv.notify();
+        	    	}
+	    	    	synchronized(asl) {
+        	    		asl.notify();
+	    	    	}
+    	    	}
+	    	}
+    	});
+        
+        stopButton.addActionListener(new ActionListener() {
+    	    public synchronized void actionPerformed(ActionEvent e) {
+    	    	asl.cancel(true);
+    	    	
+    			addButton.setText("添加");
+    	    	addButton.setEnabled(true);
+    	    	stopButton.setEnabled(false);
+
+    			ShowFrame.urlText.setEnabled(true);
+    			urlText.setText("");
+    			ShowFrame.progressBar.setString("停止添加");
+    			ShowFrame.textAreaAddText("停止添加\n");
+	    	}
+    	});
+        
+        saveConfigButton.addActionListener(new ActionListener() {
+    	    public synchronized void actionPerformed(ActionEvent e) {
+    			File configFile = new File("config.txt");
+    			Scanner input = null;
+    			try {
+    				input = new Scanner(configFile);
+    				PrintWriter writer = new PrintWriter(configFile);
+    				writer.println(hostText.getText());
+    				writer.println(portText.getText());
+    				writer.println(useridText.getText());
+    				writer.close();
+
+    				useConfig();
+    			} catch (FileNotFoundException e1) {
+    				// TODO Auto-generated catch block
+    				e1.printStackTrace();
+    			}
+    			finally {
+    				if(input != null) {
+    					input.close();
+    				}
+    			}
     	    }
         });
 
@@ -298,6 +427,38 @@ public class ShowFrame {
 	public static void textAreaAddText(String text) {
 		ShowFrame.textArea.append(text);
 		JScrollBar sBar = scrollPanel.getVerticalScrollBar();
-		sBar.setValue(sBar.getMaximum());
+		sBar.setValue(sBar.getMaximum()+10);
+	}
+	
+	public static void readConfig() throws FileNotFoundException {
+		// 读取设置
+		File configFile = new File("config.txt");
+		if (configFile.exists()) {
+			Scanner input = new Scanner(configFile);
+			hostText.setText(input.nextLine());
+			portText.setText(input.nextLine());
+			useridText.setText(input.nextLine());
+			input.close();
+			useConfig();
+		} else {
+			// 若不存在设置txt则写入
+			PrintWriter writer = new PrintWriter(configFile);
+			writer.println("");
+			writer.println("");
+			writer.println("");
+			writer.close();
+		}
+	}
+	
+	public static void useConfig() {
+		if(hostText.getText() != null && !hostText.getText().equals("")) {
+			System.setProperty("http.proxyHost", hostText.getText());
+			System.setProperty("https.proxyHost", hostText.getText());
+		}
+		if(portText.getText() != null && !portText.getText().equals("")) {
+			System.setProperty("http.proxyPort", portText.getText());
+			System.setProperty("https.proxyPort", portText.getText());
+		}
+		System.setProperty("https.protocols", "TLSv1,TLSv1.1,TLSv1.2,SSLv3");
 	}
 }
