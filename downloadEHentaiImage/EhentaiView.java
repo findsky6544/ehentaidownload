@@ -16,12 +16,19 @@ import org.jsoup.select.Elements;
 
 public class EhentaiView extends SwingWorker<Void,Integer> {
 	 String path = "G:\\EhentaiDownload\\";
+	 public Timer timer;
+	 public int currentPage = 0;
+	 public int totalPage = 0;
+	 public int completeManga = 0;
+	 public int totalManga = 0;
 	
 	public void view(Document doc,String url,String mkdirName,String pageStr) throws Exception {
 		try {
 			//暂停功能
 			if(ShowFrame.isPause) {
 				synchronized(this) {
+					ShowFrame.pauseButton.setEnabled(true);
+					ShowFrame.pauseButton.setText("继续添加/提取");
 					wait();
 				}
 			}
@@ -65,7 +72,7 @@ public class EhentaiView extends SwingWorker<Void,Integer> {
  			 }
 
  			 //等待5-10秒
- 			int random = (int)(Math.random()*5)+5;
+ 			int random = 3;
 			ShowFrame.textAreaAddText("等待"+random+"秒");
 			Thread.sleep(random*1000); 
 		} catch (Exception e) {
@@ -82,6 +89,10 @@ public class EhentaiView extends SwingWorker<Void,Integer> {
 	@Override
 	protected Void doInBackground() throws Exception {
 		Document doc = null;
+		timer = new Timer();
+		timer.ehv = this;
+		timer.start();
+		
 		for(int i = 0;i < ShowFrame.urlList.size();i++) {
 			ShowFrame.list.setSelectedIndex(i);
 			String url = ShowFrame.urlList.get(i);
@@ -90,19 +101,18 @@ public class EhentaiView extends SwingWorker<Void,Integer> {
 			String mkdirName = null;
 			String title = null;
 			try {
-				//有些页面会有警告，处理一下
+				url.replace("?nw=always", "");
+				
 				doc = Jsoup.connect(url).cookies(ShowFrame.cookie).get();
-
-    			if(doc.html().contains("Never Warn Me Again")) {
-    				url = url + "?nw=always";
-					doc = Jsoup.connect(url).cookies(ShowFrame.cookie).get();
-    			}
-			} catch (IOException e) {
+			} catch (Exception e) {
 				// TODO Auto-generated catch block
 				e.printStackTrace();
 				ShowFrame.textAreaAddText("无法连接EHentai\n");
 				ShowFrame.downloadButton.setText("提取");
 				ShowFrame.downloadButton.setEnabled(true);
+				timer.stop();
+				
+				
 				return null;
 			}
 			//获取并处理标题
@@ -137,21 +147,22 @@ public class EhentaiView extends SwingWorker<Void,Integer> {
 				for(int j = 0;j < tempElements1.size();j++) {
 					if(tempElements1.get(j).html().equals("Length:")) {
 						totalPageStr = tempElements2.get(j).html().split(" ")[0];
+						totalPage = Integer.parseInt(totalPageStr);
 						break;
 					}
 				}
 
 				ShowFrame.progressBar.setMaximum(Integer.parseInt(totalPageStr));
-				for(int j = 0;j < Integer.parseInt(totalPageStr);j++) {
+				for(int j = 0;j < totalPage;j++) {
 					int retryTime = 0;
 					//处理当前页前面的0
 					String pageStr = pageToString(j+1,totalPageStr.length());
 					
 
-					int page = Integer.parseInt(pageStr);
+					currentPage = Integer.parseInt(pageStr);
 					
-					ShowFrame.progressBar.setValue(page);
-					ShowFrame.progressBar.setString("正在提取"+page+"/"+Integer.parseInt(totalPageStr)+" 剩余"+ShowFrame.urlList.size()+"本");
+					ShowFrame.progressBar.setValue(currentPage);
+					ShowFrame.progressBar.setString("正在提取"+currentPage+"/"+totalPage+" 已完成"+completeManga+"本 剩余"+ShowFrame.urlList.size()+"本");
 					
 					//每本漫画保留一行输出就行，仅修改最后的当前页/总页数
 				  	String text = ShowFrame.textArea.getText();
@@ -170,13 +181,7 @@ public class EhentaiView extends SwingWorker<Void,Integer> {
 					if(!imageFile.exists()) {
 						String pageUrl = url;
 						//翻页
-						if(url.contains("?")) {
-							pageUrl += "&";
-						}
-						else {
-							pageUrl += "?";
-						}
-						pageUrl += "p=" + (page-1)/40;
+						pageUrl += "?p=" + (currentPage-1)/40;
 						
 						if(!doc.location().equals(pageUrl)) {
 							
@@ -210,6 +215,8 @@ public class EhentaiView extends SwingWorker<Void,Integer> {
 				ShowFrame.listModel.remove(i);
 				ShowFrame.urlList.remove(i);
 				i--;
+				completeManga++;
+				
 			}
 			else {
 				ShowFrame.textAreaAddText("complete,but some image is failed\n");

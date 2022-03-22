@@ -36,6 +36,7 @@ import javax.swing.JScrollPane;
 import javax.swing.JTabbedPane;
 import javax.swing.JTextArea;
 import javax.swing.JTextField;
+import javax.swing.SwingConstants;
 
 import org.jsoup.Jsoup;
 import org.jsoup.nodes.Document;
@@ -74,6 +75,8 @@ public class ShowFrame {
     static JButton downloadButton = new JButton("提取");
     static JButton pauseButton = new JButton("暂停");
     
+    static JLabel remainTimeLabel = new JLabel("已下载时间 --天--时--分--秒 预计剩余 --天--时--分--秒");
+    
 
 	public static JProgressBar progressBar = new JProgressBar();
 	
@@ -95,6 +98,7 @@ public class ShowFrame {
 		}
 		
 		cookie.put("sk", "mcenn8w6eeod8of5x697k24xhu5o");//默认提取中文标题，应该是这个，不知道是否长时间有效
+		cookie.put("nw", "1");//取消警告
 		if(useridText.getText() != null && !useridText.getText().equals("")) {
 			cookie.put("ipb_member_id", useridText.getText());//个人设置，筛选掉不要的分类
 		}
@@ -122,7 +126,9 @@ public class ShowFrame {
         stopButton.setEnabled(false);
         controlPanel.add(stopButton);
         controlPanel.add(deleteButton);
-        
+
+        inputPanel.add(remainTimeLabel,BorderLayout.NORTH);
+        remainTimeLabel.setHorizontalAlignment(SwingConstants.CENTER);
         inputPanel.add(controlPanel,BorderLayout.EAST);
         inputPanel.add(progressBar,BorderLayout.SOUTH);
 		progressBar.setStringPainted(true);//设置进度条显示提示信息
@@ -219,15 +225,6 @@ public class ShowFrame {
 					}
 					
         			String title = null;
-        			if(doc.html().contains("Never Warn Me Again")) {
-        				url = url + "?nw=always";
-						try {
-							doc = Jsoup.connect(url).cookies(cookie).get();
-						} catch (IOException e1) {
-							// TODO Auto-generated catch block
-							e1.printStackTrace();
-						}
-        			}
         			Elements ele = doc.select("#gj");
     				title = ele.html();
     				
@@ -366,9 +363,17 @@ public class ShowFrame {
     	    public synchronized void actionPerformed(ActionEvent e) {
     	    	isPause = !isPause;
     	    	if(isPause) {
-    	    		pauseButton.setText("继续添加/提取");
+    	    		pauseButton.setEnabled(false);
+                    
+    	    		pauseButton.setText("正在暂停……");
+    	    		
+    	    		ehv.timer.pauseStart = System.currentTimeMillis();  
+    	    		ehv.timer.stopped = true;
     	    	}
     	    	else {
+    	    		ehv.timer.pauseCount += (System.currentTimeMillis() - ehv.timer.pauseStart);  
+    	    		ehv.timer.stopped = false;  
+    	    		
     	    		pauseButton.setText("暂停");
 	    	    	synchronized(ehv) {
         	    		ehv.notify();

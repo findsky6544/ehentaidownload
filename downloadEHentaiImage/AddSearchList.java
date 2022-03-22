@@ -23,6 +23,8 @@ public class AddSearchList extends SwingWorker<Void,Integer> {
 			//暂停功能
 			if(ShowFrame.isPause) {
 				synchronized(this) {
+					ShowFrame.pauseButton.setEnabled(true);
+    	    		ShowFrame.pauseButton.setText("继续添加/提取");
 					wait();
 				}
 			}
