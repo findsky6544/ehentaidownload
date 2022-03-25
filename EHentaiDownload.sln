@@ -1,0 +1,25 @@
+﻿
+Microsoft Visual Studio Solution File, Format Version 12.00
+# Visual Studio Version 16
+VisualStudioVersion = 16.0.31402.337
+MinimumVisualStudioVersion = 10.0.40219.1
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "EHentaiDownload", "EHentaiDownload.csproj", "{B044C29F-2D91-4A1F-BEAF-3EAA6D73141D}"
+EndProject
+Global
+	GlobalSection(SolutionConfigurationPlatforms) = preSolution
+		Debug|Any CPU = Debug|Any CPU
+		Release|Any CPU = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(ProjectConfigurationPlatforms) = postSolution
+		{B044C29F-2D91-4A1F-BEAF-3EAA6D73141D}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{B044C29F-2D91-4A1F-BEAF-3EAA6D73141D}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{B044C29F-2D91-4A1F-BEAF-3EAA6D73141D}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{B044C29F-2D91-4A1F-BEAF-3EAA6D73141D}.Release|Any CPU.Build.0 = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(SolutionProperties) = preSolution
+		HideSolutionNode = FALSE
+	EndGlobalSection
+	GlobalSection(ExtensibilityGlobals) = postSolution
+		SolutionGuid = {77AB9B47-BF9D-4389-9139-7332D838CD5C}
+	EndGlobalSection
+EndGlobal
