@@ -727,6 +727,8 @@ namespace EHentaiDwonload
         private async void downloadClickAsync()
         {
             IHtmlDocument doc;
+            allRemainPage -= allCompletePage;
+            allCompletePage = 0;
 
             allMangasProgressBar.Maximum = mangaListView.Items.Count;
 
@@ -902,11 +904,6 @@ namespace EHentaiDwonload
 
                 allMangasProgressBar.Value = completeManga;
                 setProgressBarLabelText(allMangasProgressBarLabel, "已完成" + completeManga + "本 剩余" + mangaListView.Items.Count + "本 "+ allCompletePage + "/" + allPage + "页");
-
-                //等待3秒
-                int random = 3;
-                outputTextBoxAddText("等待" + random + "秒\r\n");
-                Thread.Sleep(random * 1000);
             }
             //完成输出
             outputTextBoxAddText("---------------------------------------------------------------\r\n");
@@ -976,6 +973,7 @@ namespace EHentaiDwonload
         {
             programStart = DateTime.Now.Ticks;
             pauseStart = programStart;
+            pauseCount = 0;
 
             while (timerThread.ThreadState != ThreadState.Aborted && timerThread.ThreadState != ThreadState.AbortRequested)
             {
