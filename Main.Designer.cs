@@ -328,7 +328,7 @@ namespace EHentaiDwonload
             this.remainTimeLabel.Name = "remainTimeLabel";
             this.remainTimeLabel.Size = new System.Drawing.Size(756, 12);
             this.remainTimeLabel.TabIndex = 0;
-            this.remainTimeLabel.Text = "已下载时间-天-时-分-秒-页 预计剩余-天-时-分-秒-页";
+            this.remainTimeLabel.Text = "下载速度 -秒/页 已下载时间-天-时-分-秒 预计剩余-天-时-分-秒";
             this.remainTimeLabel.TextAlign = System.Drawing.ContentAlignment.MiddleCenter;
             // 
             // tabPage2
