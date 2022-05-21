@@ -58,6 +58,13 @@ namespace EHentaiDwonload
         private long pauseCount = 0;// 线程暂停的总时间  
         private long totalTime = 0;//显示总时间
 
+        private long onePageStart;
+        private long onePageEnd;
+
+        private float downloadSpeed = 0;
+
+        private int minWaitTime = 7;
+
         public Main()
         {
             InitializeComponent();
@@ -125,6 +132,7 @@ namespace EHentaiDwonload
             config.Add("port", "");
             config.Add("userid", "");
             config.Add("downloadPath", "");
+            config.Add("minWaitTime", "7");
 
             if (File.Exists("config.txt"))
             {
@@ -150,6 +158,7 @@ namespace EHentaiDwonload
                 portTextBox.Text = config["port"];
                 userIdTextBox.Text = config["userid"];
                 downloadPathTextBox.Text = config["downloadPath"];
+                minWaitTimeTextBox.Text = string.IsNullOrEmpty(config["minWaitTime"])?"7": config["minWaitTime"];
             }
             else
             {
@@ -177,6 +186,7 @@ namespace EHentaiDwonload
                 webProxy = new WebProxy(config["serverip"], int.Parse(config["port"]));
             }
             path = config["downloadPath"];
+            minWaitTime = int.Parse(config["minWaitTime"]);
         }
 
         private void addUrlButton_Click(object sender, EventArgs e)
@@ -564,9 +574,9 @@ namespace EHentaiDwonload
 
                 mangaListView.Items.RemoveAt(index);
 
-                if(index < currentDownloadMangaIndex)
+                if(index < downloadingIndex)
                 {
-                    currentDownloadMangaIndex--;
+                    downloadingIndex--;
                 }
 
                 //移除之后自动选择下一项
@@ -740,8 +750,6 @@ namespace EHentaiDwonload
             //下载图片信号量，下完一张图片才能下载下一张
             downloadImageEvent = new AutoResetEvent(true);
         }
-
-        public int currentDownloadMangaIndex = 0;
         private async void downloadClickAsync()
         {
             isDownloading = true;
@@ -752,13 +760,13 @@ namespace EHentaiDwonload
 
             allMangasProgressBar.Maximum = allPage;
 
-            for (currentDownloadMangaIndex = 0; currentDownloadMangaIndex < mangaListView.Items.Count; currentDownloadMangaIndex++)
+            for (downloadingIndex = 0; downloadingIndex < mangaListView.Items.Count; downloadingIndex++)
             {
-                mangaListView.Items[currentDownloadMangaIndex].Selected = true;
+                mangaListView.Items[downloadingIndex].Selected = true;
 
                 bool hasError = false;
                 //获取并处理标题
-                string title = mangaListView.Items[currentDownloadMangaIndex].SubItems[1].Text;
+                string title = mangaListView.Items[downloadingIndex].SubItems[1].Text;
                 /*string title = doc.QuerySelector("#gj").InnerHtml;
 
                 if (title == "")
@@ -784,7 +792,7 @@ namespace EHentaiDwonload
                 }
                 //获取总页数
 
-                string totalPageStr = mangaListView.Items[currentDownloadMangaIndex].SubItems[2].Text;
+                string totalPageStr = mangaListView.Items[downloadingIndex].SubItems[2].Text;
                 int totalPage = string.IsNullOrEmpty(totalPageStr)?0:int.Parse(totalPageStr);
 
                 oneMangaProgressBar.Maximum = totalPage;
@@ -792,6 +800,7 @@ namespace EHentaiDwonload
                 int retryTime = 0;
                 for (int j = 0; j < totalPage; j++)
                 {
+                    onePageStart = DateTime.Now.Ticks;
                     //暂停功能
                     if (isDownloadPause)
                     {
@@ -847,7 +856,7 @@ namespace EHentaiDwonload
                         outputTextBox.Select(outputTextBox.TextLength, 0);
                         outputTextBox.ScrollToCaret();
 
-                        string pageUrl = mangaListView.Items[currentDownloadMangaIndex].Text.Replace("?nw=always", "");
+                        string pageUrl = mangaListView.Items[downloadingIndex].Text.Replace("?nw=always", "");
                         //翻页
                         pageUrl += "?p=" + (currentPage - 1) / 40;
 
@@ -879,10 +888,12 @@ namespace EHentaiDwonload
                                 view(imagePageDoc, mkdirName, pageStr);
 
                                 //计算完成页数、剩余页数
-                                mangaListView.Items[currentDownloadMangaIndex].SubItems[3].Text = (int.Parse(mangaListView.Items[currentDownloadMangaIndex].SubItems[3].Text) + 1).ToString();
+                                mangaListView.Items[downloadingIndex].SubItems[3].Text = (int.Parse(mangaListView.Items[downloadingIndex].SubItems[3].Text) + 1).ToString();
                                 allCompletePage++;
-                                mangaListView.Items[currentDownloadMangaIndex].SubItems[4].Text = (int.Parse(mangaListView.Items[currentDownloadMangaIndex].SubItems[4].Text) - 1).ToString();
+                                mangaListView.Items[downloadingIndex].SubItems[4].Text = (int.Parse(mangaListView.Items[downloadingIndex].SubItems[4].Text) - 1).ToString();
                                 allRemainPage--;
+
+                                downloadSpeed = (float)totalTime / 1000 / (allCompletePage == 0 ? 1 : allCompletePage);
 
                                 //修改进度条
                                 setProgressBarLabelText(allMangasProgressBarLabel, "已完成" + completeManga + "本" + allCompletePage + "页 剩余" + mangaListView.Items.Count + "本" + allRemainPage + "页");
@@ -901,6 +912,12 @@ namespace EHentaiDwonload
                                         Thread.Sleep(1000);
                                     }
                                 }*/
+                                outputTextBoxAddText(doc.Body.InnerHtml + "\r\n");
+                                if (doc.Body.InnerHtml.Contains("banned"))
+                                {
+                                    timerThread.Abort();
+                                    return;
+                                }
                                 hasError = true;
                                 downloadImageEvent.Set();
                                 break;
@@ -936,8 +953,8 @@ namespace EHentaiDwonload
                 {
                     outputTextBoxAddText("complete!\r\n");
 
-                    mangaListView.Items.RemoveAt(currentDownloadMangaIndex);
-                    currentDownloadMangaIndex--;
+                    mangaListView.Items.RemoveAt(downloadingIndex);
+                    downloadingIndex--;
                     completeManga++;
 
                 }
@@ -984,10 +1001,18 @@ namespace EHentaiDwonload
                     downImage.Save(imagePath);
 
                     //等待3秒
-                    if(!isDownloadPause && downloadThread.ThreadState != ThreadState.AbortRequested && downloadThread.ThreadState != ThreadState.Aborted)
+                    if (!isDownloadPause && downloadThread.ThreadState != ThreadState.AbortRequested && downloadThread.ThreadState != ThreadState.Aborted)
                     {
+
+                        onePageEnd = DateTime.Now.Ticks;
+
+                        int onePageDuring = (int)((onePageEnd - onePageStart) / 10000000);
                         int random = 3;
-                        while(random > 0)
+                        if (onePageDuring < minWaitTime)
+                        {
+                            random = minWaitTime - onePageDuring;
+                        }
+                        while (random > 0)
                         {
                             outputTextBox.Text = outputTextBox.Text.Substring(0, outputTextBox.Text.LastIndexOf(".")+1);
                             outputTextBoxAddText("等待" + random + "秒\r\n");
@@ -1031,7 +1056,7 @@ namespace EHentaiDwonload
                 {
                     totalTime = (DateTime.Now.Ticks - programStart - pauseCount) / 10000;
 
-                    remainTimeLabel.Text = "下载速度 "+ Math.Round(((float)totalTime / 1000 / (allCompletePage == 0 ? 1 : allCompletePage)), 3) +"秒/页 已下载时间 " + format(totalTime) + " 预计剩余" + getRemainTime(totalTime);
+                    remainTimeLabel.Text = "下载速度 "+ Math.Round(downloadSpeed, 3) +"秒/页 已下载时间 " + format(totalTime) + " 预计剩余" + getRemainTime();
                 }
 
                     Thread.Sleep(1000);  // 1秒更新一次显示
@@ -1060,11 +1085,11 @@ namespace EHentaiDwonload
         }
 
         //计算剩余时间
-        public string getRemainTime(long totalTime)
+        public string getRemainTime()
         {
             if (allCompletePage != 0)
             {
-                totalTime = totalTime / allCompletePage * allRemainPage;
+                int totalTime = (int)(downloadSpeed*1000 * allRemainPage);
                 return format(totalTime);
             }
             else
@@ -1144,6 +1169,22 @@ namespace EHentaiDwonload
             if(timerThread != null)
             {
                 timerThread.Abort();
+            }
+        }
+
+        private void minWaitTimeTextBox_GotFocus(object sender, EventArgs e)
+        {
+            minWaitTimeTextBox.Tag = minWaitTimeTextBox.Text;
+        }
+
+        private void minWaitTimeTextBox_LostFocus(object sender, EventArgs e)
+        {
+            try
+            {
+                config["minWaitTime"] = minWaitTimeTextBox.Text;
+            }catch(Exception ex)
+            {
+                minWaitTimeTextBox.Text = minWaitTimeTextBox.Tag.ToString();
             }
         }
     }
