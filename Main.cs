@@ -101,6 +101,8 @@ namespace EHentaiDwonload
                 webRequesthandler.Proxy = webProxy;
             }
 
+            minWaitTime = int.Parse(config["minWaitTime"]);
+
             //建立httpclient
             client = new HttpClient(webRequesthandler);
 
@@ -1089,7 +1091,7 @@ namespace EHentaiDwonload
         {
             if (allCompletePage != 0)
             {
-                int totalTime = (int)(downloadSpeed*1000 * allRemainPage);
+                long totalTime = (long)(downloadSpeed*1000 * allRemainPage);
                 return format(totalTime);
             }
             else
