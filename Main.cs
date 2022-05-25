@@ -845,8 +845,7 @@ namespace EHentaiDwonload
                         retryStr = " 重试第" + retryTime + "次";
                     }
 
-                    string imageFilePath = mkdirName + "\\" + pageStr;
-                    string newImageFilePath = imageFilePath;
+                    string imageFilePath = mkdirName + "\\" + pageStr + ".jpg";
 
                     //判断该图片是否已存在
                     if (!File.Exists(imageFilePath))
