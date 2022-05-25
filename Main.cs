@@ -785,13 +785,13 @@ namespace EHentaiDwonload
                 title = title.Replace('>', '_');
                 title = title.Replace('|', '_');*/
                 string mkdirName = path + title;
-                outputTextBoxAddText(mkdirName + " is downloading...\r\n");
 
                 //创建文件夹
                 if (!Directory.Exists(mkdirName))
                 {
                     Directory.CreateDirectory(mkdirName);
                 }
+                outputTextBoxAddText(mkdirName + " is downloading...\r\n");
                 //获取总页数
 
                 string totalPageStr = mangaListView.Items[downloadingIndex].SubItems[2].Text;
@@ -845,7 +845,8 @@ namespace EHentaiDwonload
                         retryStr = " 重试第" + retryTime + "次";
                     }
 
-                    string imageFilePath = mkdirName + "\\" + pageStr + ".jpg";
+                    string imageFilePath = mkdirName + "\\" + pageStr;
+                    string newImageFilePath = imageFilePath;
 
                     //判断该图片是否已存在
                     if (!File.Exists(imageFilePath))
@@ -1025,6 +1026,12 @@ namespace EHentaiDwonload
                 }
                 catch (Exception e)
                 {
+
+                    onePageEnd = DateTime.Now.Ticks;
+
+                    long onePageDuring = onePageEnd - onePageStart;
+                    pauseCount += onePageDuring;
+
                     //outputTextBoxAddText(e.ToString());
                     if (File.Exists(imagePath))
                     {
