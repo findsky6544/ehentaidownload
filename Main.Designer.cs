@@ -39,15 +39,16 @@ namespace EHentaiDwonload
             this.allMangasProgressBarLabel = new System.Windows.Forms.Label();
             this.stopAddUrlButton = new System.Windows.Forms.Button();
             this.groupBox1 = new System.Windows.Forms.GroupBox();
-            this.deleteMangaButton = new System.Windows.Forms.Button();
-            this.ImportMangaButton = new System.Windows.Forms.Button();
-            this.exportMangaButton = new System.Windows.Forms.Button();
             this.mangaListView = new System.Windows.Forms.ListView();
             this.columnHeader2 = ((System.Windows.Forms.ColumnHeader)(new System.Windows.Forms.ColumnHeader()));
             this.columnHeader1 = ((System.Windows.Forms.ColumnHeader)(new System.Windows.Forms.ColumnHeader()));
             this.columnHeader3 = ((System.Windows.Forms.ColumnHeader)(new System.Windows.Forms.ColumnHeader()));
             this.columnHeader4 = ((System.Windows.Forms.ColumnHeader)(new System.Windows.Forms.ColumnHeader()));
             this.columnHeader5 = ((System.Windows.Forms.ColumnHeader)(new System.Windows.Forms.ColumnHeader()));
+            this.panel1 = new System.Windows.Forms.Panel();
+            this.deleteMangaButton = new System.Windows.Forms.Button();
+            this.exportMangaButton = new System.Windows.Forms.Button();
+            this.ImportMangaButton = new System.Windows.Forms.Button();
             this.groupBox2 = new System.Windows.Forms.GroupBox();
             this.outputTextBox = new System.Windows.Forms.TextBox();
             this.addUrlButton = new System.Windows.Forms.Button();
@@ -72,14 +73,13 @@ namespace EHentaiDwonload
             this.portTextBox = new System.Windows.Forms.TextBox();
             this.saveFileDialog1 = new System.Windows.Forms.SaveFileDialog();
             this.openFileDialog1 = new System.Windows.Forms.OpenFileDialog();
-            this.panel1 = new System.Windows.Forms.Panel();
             this.tabControl1.SuspendLayout();
             this.tabPage1.SuspendLayout();
             this.groupBox1.SuspendLayout();
+            this.panel1.SuspendLayout();
             this.groupBox2.SuspendLayout();
             this.tabPage2.SuspendLayout();
             this.panel10.SuspendLayout();
-            this.panel1.SuspendLayout();
             this.SuspendLayout();
             // 
             // tabControl1
@@ -178,38 +178,6 @@ namespace EHentaiDwonload
             this.groupBox1.TabStop = false;
             this.groupBox1.Text = "待提取列表";
             // 
-            // deleteMangaButton
-            // 
-            this.deleteMangaButton.Enabled = false;
-            this.deleteMangaButton.Location = new System.Drawing.Point(58, 4);
-            this.deleteMangaButton.Name = "deleteMangaButton";
-            this.deleteMangaButton.Size = new System.Drawing.Size(75, 23);
-            this.deleteMangaButton.TabIndex = 4;
-            this.deleteMangaButton.Text = "删除";
-            this.deleteMangaButton.UseVisualStyleBackColor = true;
-            this.deleteMangaButton.Click += new System.EventHandler(this.deleteMangaButton_Click);
-            // 
-            // ImportMangaButton
-            // 
-            this.ImportMangaButton.Location = new System.Drawing.Point(140, 4);
-            this.ImportMangaButton.Name = "ImportMangaButton";
-            this.ImportMangaButton.Size = new System.Drawing.Size(75, 23);
-            this.ImportMangaButton.TabIndex = 6;
-            this.ImportMangaButton.Text = "导入";
-            this.ImportMangaButton.UseVisualStyleBackColor = true;
-            this.ImportMangaButton.Click += new System.EventHandler(this.ImportMangaButton_Click);
-            // 
-            // exportMangaButton
-            // 
-            this.exportMangaButton.Enabled = false;
-            this.exportMangaButton.Location = new System.Drawing.Point(222, 4);
-            this.exportMangaButton.Name = "exportMangaButton";
-            this.exportMangaButton.Size = new System.Drawing.Size(75, 23);
-            this.exportMangaButton.TabIndex = 7;
-            this.exportMangaButton.Text = "导出";
-            this.exportMangaButton.UseVisualStyleBackColor = true;
-            this.exportMangaButton.Click += new System.EventHandler(this.exportMangaButton_Click);
-            // 
             // mangaListView
             // 
             this.mangaListView.Columns.AddRange(new System.Windows.Forms.ColumnHeader[] {
@@ -252,6 +220,49 @@ namespace EHentaiDwonload
             // columnHeader5
             // 
             this.columnHeader5.Text = "剩余";
+            // 
+            // panel1
+            // 
+            this.panel1.Controls.Add(this.deleteMangaButton);
+            this.panel1.Controls.Add(this.exportMangaButton);
+            this.panel1.Controls.Add(this.ImportMangaButton);
+            this.panel1.Dock = System.Windows.Forms.DockStyle.Bottom;
+            this.panel1.Location = new System.Drawing.Point(3, 461);
+            this.panel1.Name = "panel1";
+            this.panel1.Size = new System.Drawing.Size(375, 32);
+            this.panel1.TabIndex = 8;
+            // 
+            // deleteMangaButton
+            // 
+            this.deleteMangaButton.Enabled = false;
+            this.deleteMangaButton.Location = new System.Drawing.Point(58, 4);
+            this.deleteMangaButton.Name = "deleteMangaButton";
+            this.deleteMangaButton.Size = new System.Drawing.Size(75, 23);
+            this.deleteMangaButton.TabIndex = 4;
+            this.deleteMangaButton.Text = "删除";
+            this.deleteMangaButton.UseVisualStyleBackColor = true;
+            this.deleteMangaButton.Click += new System.EventHandler(this.deleteMangaButton_Click);
+            // 
+            // exportMangaButton
+            // 
+            this.exportMangaButton.Enabled = false;
+            this.exportMangaButton.Location = new System.Drawing.Point(222, 4);
+            this.exportMangaButton.Name = "exportMangaButton";
+            this.exportMangaButton.Size = new System.Drawing.Size(75, 23);
+            this.exportMangaButton.TabIndex = 7;
+            this.exportMangaButton.Text = "导出";
+            this.exportMangaButton.UseVisualStyleBackColor = true;
+            this.exportMangaButton.Click += new System.EventHandler(this.exportMangaButton_Click);
+            // 
+            // ImportMangaButton
+            // 
+            this.ImportMangaButton.Location = new System.Drawing.Point(140, 4);
+            this.ImportMangaButton.Name = "ImportMangaButton";
+            this.ImportMangaButton.Size = new System.Drawing.Size(75, 23);
+            this.ImportMangaButton.TabIndex = 6;
+            this.ImportMangaButton.Text = "导入";
+            this.ImportMangaButton.UseVisualStyleBackColor = true;
+            this.ImportMangaButton.Click += new System.EventHandler(this.ImportMangaButton_Click);
             // 
             // groupBox2
             // 
@@ -475,17 +486,6 @@ namespace EHentaiDwonload
             // 
             this.openFileDialog1.FileName = "openFileDialog1";
             // 
-            // panel1
-            // 
-            this.panel1.Controls.Add(this.deleteMangaButton);
-            this.panel1.Controls.Add(this.exportMangaButton);
-            this.panel1.Controls.Add(this.ImportMangaButton);
-            this.panel1.Dock = System.Windows.Forms.DockStyle.Bottom;
-            this.panel1.Location = new System.Drawing.Point(3, 461);
-            this.panel1.Name = "panel1";
-            this.panel1.Size = new System.Drawing.Size(375, 32);
-            this.panel1.TabIndex = 8;
-            // 
             // Main
             // 
             this.AutoScaleDimensions = new System.Drawing.SizeF(6F, 12F);
@@ -493,6 +493,7 @@ namespace EHentaiDwonload
             this.ClientSize = new System.Drawing.Size(800, 652);
             this.Controls.Add(this.tabControl1);
             this.Name = "Main";
+            this.StartPosition = System.Windows.Forms.FormStartPosition.CenterScreen;
             this.Text = "EHentaiDownload";
             this.FormClosing += new System.Windows.Forms.FormClosingEventHandler(this.Main_FormClosing);
             this.Load += new System.EventHandler(this.Main_Load);
@@ -501,12 +502,12 @@ namespace EHentaiDwonload
             this.tabPage1.ResumeLayout(false);
             this.tabPage1.PerformLayout();
             this.groupBox1.ResumeLayout(false);
+            this.panel1.ResumeLayout(false);
             this.groupBox2.ResumeLayout(false);
             this.groupBox2.PerformLayout();
             this.tabPage2.ResumeLayout(false);
             this.panel10.ResumeLayout(false);
             this.panel10.PerformLayout();
-            this.panel1.ResumeLayout(false);
             this.ResumeLayout(false);
 
         }

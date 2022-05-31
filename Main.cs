@@ -82,8 +82,6 @@ namespace EHentaiDwonload
             readConfig();
 
             path = config["downloadPath"];
-
-            WebRequestHandler webRequesthandler = new WebRequestHandler();
             //应用cookie
             cookies.Add(new Cookie("sk", "mcenn8w6eeod8of5x697k24xhu5o") { Domain = domain });//默认提取中文标题，应该是这个，不知道是否长时间有效
             cookies.Add(new Cookie("nw", "1") { Domain = domain });//取消警告
@@ -91,20 +89,8 @@ namespace EHentaiDwonload
             {
                 cookies.Add(new Cookie("ipb_member_id", userIdTextBox.Text) { Domain = domain });//个人设置，筛选掉不要的分类
             }
-            CookieContainer cookieContainer = new CookieContainer();
-            cookieContainer.Add(cookies);
-            webRequesthandler.CookieContainer = cookieContainer;
 
-            if (!string.IsNullOrEmpty(config["serverip"]) && !string.IsNullOrEmpty(config["port"]))
-            {
-                webProxy = new WebProxy(config["serverip"], int.Parse(config["port"]));
-                webRequesthandler.Proxy = webProxy;
-            }
-
-            minWaitTime = int.Parse(config["minWaitTime"]);
-
-            //建立httpclient
-            client = new HttpClient(webRequesthandler);
+            saveConfig(config);
 
             //进度条文本配置
             oneMangaProgressBarLabel.Parent = oneMangaProgressBar;
@@ -172,6 +158,7 @@ namespace EHentaiDwonload
         //保存配置
         private void saveConfig(Dictionary<string, string> config)
         {
+
             using (StreamWriter sw = new StreamWriter("config.txt"))
             {
                 foreach (KeyValuePair<string, string> kv in config)
@@ -179,16 +166,35 @@ namespace EHentaiDwonload
                     sw.WriteLine(kv.Key + "=" + kv.Value);
                 }
             }
+
+            WebRequestHandler webRequesthandler = new WebRequestHandler();
+            CookieContainer cookieContainer = new CookieContainer();
+
             if (string.IsNullOrEmpty(userIdTextBox.Text))
             {
                 cookies.Add(new Cookie("ipb_member_id", userIdTextBox.Text) { Domain = domain });//个人设置，筛选掉不要的分类
             }
-            if(!string.IsNullOrEmpty(config["serverip"]) && !string.IsNullOrEmpty(config["port"]))
+            cookieContainer.Add(cookies);
+
+            path = config["downloadPath"];
+
+
+            webRequesthandler.CookieContainer = cookieContainer;
+
+            if (!string.IsNullOrEmpty(config["serverip"]) && !string.IsNullOrEmpty(config["port"]))
             {
                 webProxy = new WebProxy(config["serverip"], int.Parse(config["port"]));
+                webRequesthandler.Proxy = webProxy;
             }
-            path = config["downloadPath"];
+            else
+            {
+                webRequesthandler.Proxy = null;
+            }
+
             minWaitTime = int.Parse(config["minWaitTime"]);
+
+            //建立httpclient
+            client = new HttpClient(webRequesthandler);
         }
 
         private void addUrlButton_Click(object sender, EventArgs e)
@@ -1009,11 +1015,11 @@ namespace EHentaiDwonload
                         onePageEnd = DateTime.Now.Ticks;
 
                         int onePageDuring = (int)((onePageEnd - onePageStart) / 10000000);
-                        int random = 3;
-                        if (onePageDuring < minWaitTime)
+                        int random = minWaitTime;
+                        /*if (onePageDuring < minWaitTime)
                         {
                             random = minWaitTime - onePageDuring;
-                        }
+                        }*/
                         while (random > 0)
                         {
                             outputTextBox.Text = outputTextBox.Text.Substring(0, outputTextBox.Text.LastIndexOf(".")+1);
@@ -1064,30 +1070,30 @@ namespace EHentaiDwonload
                 {
                     totalTime = (DateTime.Now.Ticks - programStart - pauseCount) / 10000;
 
-                    remainTimeLabel.Text = "下载速度 "+ Math.Round(downloadSpeed, 3) +"秒/页 已下载时间 " + format(totalTime) + " 预计剩余" + getRemainTime();
+                    remainTimeLabel.Text = "下载速度 "+ Math.Round(downloadSpeed, allRemainPage.ToString().Length) +"秒/页 已下载时间 " + format(totalTime) + " 预计剩余" +getRemainTime() + "("+(long)(downloadSpeed * allRemainPage) + "秒)";
                 }
 
-                    Thread.Sleep(1000);  // 1秒更新一次显示
+                    Thread.Sleep(1000);  // 1秒更新一次显示 
             }
         }
 
         // 将毫秒数格式化  
         public string format(long totalTime)
         {
-            float totalTimef = (float)totalTime;
+            //float totalTimef = (float)totalTime;
             int day, hour, minute, second;
 
-            totalTimef = totalTimef / 1000;
+            totalTime = totalTime / 1000;
 
-            second = (int)(totalTimef % 60);
-            totalTimef = totalTimef / 60;
+            second = (int)(totalTime % 60);
+            totalTime = totalTime / 60;
 
-            minute = (int)(totalTimef % 60);
-            totalTimef = totalTimef / 60;
+            minute = (int)(totalTime % 60);
+            totalTime = totalTime / 60;
 
-            hour = (int)totalTimef % 24;
+            hour = (int)totalTime % 24;
 
-            day = (int)totalTimef / 24;
+            day = (int)totalTime / 24;
 
             return day + "天" + hour + "时" + minute + "分" + second + "秒";
         }
